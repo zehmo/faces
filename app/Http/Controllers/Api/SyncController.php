@@ -14,7 +14,7 @@ class SyncController extends Controller
     {
         $since = $request->query('since'); // ISO 8601 timestamp
 
-        $query = Student::with(['department', 'state', 'lga', 'town', 'fees.academicSession']);
+        $query = Student::with(['department', 'state', 'lga', 'fees.academicSession']);
 
         if ($since) {
             $query->where('updated_at', '>', $since);
@@ -32,7 +32,7 @@ class SyncController extends Controller
                 'marital_status' => $s->marital_status,
                 'state' => $s->state->name ?? null,
                 'lga' => $s->lga->name ?? null,
-                'town' => $s->town->name ?? null,
+                'town' => $s->town,
                 'phone_number' => $s->phone_number,
                 'email' => $s->email,
                 'department' => $s->department->name ?? null,

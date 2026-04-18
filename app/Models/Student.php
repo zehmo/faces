@@ -20,7 +20,7 @@ class Student extends Model
         'marital_status',
         'state_id',
         'lga_id',
-        'town_id',
+        'town',
         'phone_number',
         'email',
         'department_id',
@@ -40,11 +40,6 @@ class Student extends Model
     public function lga(): BelongsTo
     {
         return $this->belongsTo(Lga::class);
-    }
-
-    public function town(): BelongsTo
-    {
-        return $this->belongsTo(Town::class);
     }
 
     public function department(): BelongsTo

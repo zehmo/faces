@@ -58,7 +58,7 @@ class StudentController extends Controller
             'marital_status' => 'required|in:Single,Married',
             'state_id' => 'nullable|exists:states,id',
             'lga_id' => 'nullable|exists:lgas,id',
-            'town_id' => 'nullable|exists:towns,id',
+            'town' => 'nullable|string|max:100',
             'phone_number' => 'nullable|string|max:20',
             'email' => 'nullable|email|max:255',
             'department_id' => 'nullable|exists:departments,id',
@@ -91,7 +91,7 @@ class StudentController extends Controller
 
     public function show(Student $student)
     {
-        $student->load(['department', 'state', 'lga', 'town', 'fees.academicSession']);
+        $student->load(['department', 'state', 'lga', 'fees.academicSession']);
         return view('admin.students.show', compact('student'));
     }
 
@@ -116,7 +116,7 @@ class StudentController extends Controller
             'marital_status' => 'required|in:Single,Married',
             'state_id' => 'nullable|exists:states,id',
             'lga_id' => 'nullable|exists:lgas,id',
-            'town_id' => 'nullable|exists:towns,id',
+            'town' => 'nullable|string|max:100',
             'phone_number' => 'nullable|string|max:20',
             'email' => 'nullable|email|max:255',
             'department_id' => 'nullable|exists:departments,id',
@@ -184,7 +184,7 @@ class StudentController extends Controller
 
     public function export(Request $request)
     {
-        $query = Student::with(['department', 'state', 'lga', 'town', 'fees.academicSession']);
+        $query = Student::with(['department', 'state', 'lga', 'fees.academicSession']);
 
         if ($request->department) {
             $query->where('department_id', $request->department);
@@ -225,7 +225,7 @@ class StudentController extends Controller
                     $s->marital_status,
                     $s->state->name ?? '',
                     $s->lga->name ?? '',
-                    $s->town->name ?? '',
+                    $s->town ?? '',
                     $s->phone_number,
                     $s->email,
                     $s->department->name ?? '',
@@ -357,14 +357,6 @@ class StudentController extends Controller
                     ->value('id');
             }
 
-            // Resolve Town
-            $townId = null;
-            if (!empty($data['town']) && $lgaId) {
-                $townId = Town::where('lga_id', $lgaId)
-                    ->whereRaw('LOWER(name) = ?', [strtolower(trim($data['town']))])
-                    ->value('id');
-            }
-
             // Process photo if available
             $photoFilename = '';
             $regKey = strtoupper(trim($regNumber));
@@ -396,7 +388,7 @@ class StudentController extends Controller
                 'marital_status' => $maritalStatus,
                 'state_id' => $stateId,
                 'lga_id' => $lgaId,
-                'town_id' => $townId,
+                'town' => trim($data['town'] ?? ''),
                 'phone_number' => trim($data['phone_number'] ?? $data['phone'] ?? ''),
                 'email' => trim($data['email'] ?? ''),
                 'department_id' => $deptId,

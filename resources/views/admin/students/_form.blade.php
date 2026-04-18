@@ -61,9 +61,7 @@
     </div>
     <div class="col-md-4">
         <label class="form-label">Town</label>
-        <select name="town_id" id="townSelect" class="form-select">
-            <option value="">— Select Town —</option>
-        </select>
+        <input type="text" name="town" class="form-control" value="{{ old('town', $student->town ?? '') }}" placeholder="Enter town">
     </div>
 
     <div class="col-md-4">
@@ -99,13 +97,10 @@
 document.addEventListener('DOMContentLoaded', function() {
     const stateSelect = document.getElementById('stateSelect');
     const lgaSelect = document.getElementById('lgaSelect');
-    const townSelect = document.getElementById('townSelect');
     const oldLga = '{{ old("lga_id", $student->lga_id ?? "") }}';
-    const oldTown = '{{ old("town_id", $student->town_id ?? "") }}';
 
     function loadLgas(stateId, selectedLga) {
         lgaSelect.innerHTML = '<option value="">— Select LGA —</option>';
-        townSelect.innerHTML = '<option value="">— Select Town —</option>';
         if (!stateId) return;
         fetch('{{ url("admin/api/lgas") }}/' + stateId)
             .then(r => r.json())
@@ -114,25 +109,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     const opt = new Option(lga.name, lga.id, false, lga.id == selectedLga);
                     lgaSelect.add(opt);
                 });
-                if (selectedLga) loadTowns(selectedLga, oldTown);
-            });
-    }
-
-    function loadTowns(lgaId, selectedTown) {
-        townSelect.innerHTML = '<option value="">— Select Town —</option>';
-        if (!lgaId) return;
-        fetch('{{ url("admin/api/towns") }}/' + lgaId)
-            .then(r => r.json())
-            .then(data => {
-                data.forEach(town => {
-                    const opt = new Option(town.name, town.id, false, town.id == selectedTown);
-                    townSelect.add(opt);
-                });
             });
     }
 
     stateSelect.addEventListener('change', () => loadLgas(stateSelect.value, ''));
-    lgaSelect.addEventListener('change', () => loadTowns(lgaSelect.value, ''));
 
     // Pre-load on edit
     if (stateSelect.value) loadLgas(stateSelect.value, oldLga);

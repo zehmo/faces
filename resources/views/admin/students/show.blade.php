@@ -30,7 +30,7 @@
                     <tr><th>Marital Status</th><td>{{ $student->marital_status }}</td></tr>
                     <tr><th>State of Origin</th><td>{{ $student->state->name ?? '—' }}</td></tr>
                     <tr><th>L.G.A.</th><td>{{ $student->lga->name ?? '—' }}</td></tr>
-                    <tr><th>Town</th><td>{{ $student->town->name ?? '—' }}</td></tr>
+                    <tr><th>Town</th><td>{{ $student->town ?? '—' }}</td></tr>
                     <tr><th>Phone</th><td>{{ $student->phone_number ?? '—' }}</td></tr>
                     <tr><th>Email</th><td>{{ $student->email ?? '—' }}</td></tr>
                     <tr><th>Department</th><td>{{ $student->department->name ?? '—' }}</td></tr>

@@ -24,7 +24,7 @@ android {
     buildTypes {
         debug {
             // Change this to your dev machine IP on your local network
-            buildConfigField "String", "API_BASE_URL", "\"http://172.20.10.2/faces/public/api/\""
+            buildConfigField "String", "API_BASE_URL", "\"http://192.168.1.173/faces/public/api/\""
         }
         release {
             minifyEnabled true
