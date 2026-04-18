@@ -4,7 +4,10 @@
 @section('content')
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h4 class="mb-0">Students</h4>
-    <a href="{{ route('admin.students.create') }}" class="btn btn-success btn-sm"><i class="bi bi-plus-lg"></i> Add Student</a>
+    <div>
+        <a href="{{ route('admin.students.import.form') }}" class="btn btn-outline-primary btn-sm"><i class="bi bi-upload"></i> Import CSV</a>
+        <a href="{{ route('admin.students.create') }}" class="btn btn-success btn-sm"><i class="bi bi-plus-lg"></i> Add Student</a>
+    </div>
 </div>
 
 <form method="GET" class="row g-2 mb-3">

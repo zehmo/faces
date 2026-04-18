@@ -7,6 +7,8 @@ use App\Models\Student;
 use App\Models\StudentFee;
 use App\Models\Department;
 use App\Models\State;
+use App\Models\Lga;
+use App\Models\Town;
 use App\Models\AcademicSession;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -240,6 +242,246 @@ class StudentController extends Controller
         };
 
         return response()->stream($callback, 200, $headers);
+    }
+
+    public function importForm()
+    {
+        return view('admin.students.import');
+    }
+
+    public function import(Request $request)
+    {
+        $request->validate([
+            'csv_file' => 'required|file|mimes:csv,txt|max:10240',
+            'photos_zip' => 'nullable|file|mimes:zip|max:102400',
+        ]);
+
+        // Parse CSV
+        $csvPath = $request->file('csv_file')->getPathname();
+        $handle = fopen($csvPath, 'r');
+        if (!$handle) {
+            return back()->with('error', 'Could not read CSV file.');
+        }
+
+        // Read header row
+        $header = fgetcsv($handle);
+        if (!$header) {
+            fclose($handle);
+            return back()->with('error', 'CSV file is empty.');
+        }
+
+        // Normalize header names (lowercase, trim, underscores)
+        $header = array_map(function ($h) {
+            return strtolower(trim(str_replace(' ', '_', $h)));
+        }, $header);
+
+        $required = ['reg_number', 'full_name', 'department', 'level'];
+        $missing = array_diff($required, $header);
+        if (!empty($missing)) {
+            fclose($handle);
+            return back()->with('error', 'CSV missing required columns: ' . implode(', ', $missing));
+        }
+
+        // Extract photos from ZIP if provided
+        $photoMap = [];
+        $tempZipDir = null;
+        if ($request->hasFile('photos_zip')) {
+            $zip = new \ZipArchive();
+            $tempZipDir = storage_path('app/temp_import_' . time());
+            mkdir($tempZipDir, 0755, true);
+
+            if ($zip->open($request->file('photos_zip')->getPathname()) === true) {
+                $zip->extractTo($tempZipDir);
+                $zip->close();
+
+                // Build map: reg_number (without extension) => file path
+                $iterator = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($tempZipDir));
+                foreach ($iterator as $file) {
+                    if ($file->isFile() && in_array(strtolower($file->getExtension()), ['jpg', 'jpeg', 'png'])) {
+                        $name = pathinfo($file->getFilename(), PATHINFO_FILENAME);
+                        $photoMap[strtoupper(trim($name))] = $file->getPathname();
+                    }
+                }
+            }
+        }
+
+        // Cache lookups
+        $departments = Department::pluck('id', 'name')->mapWithKeys(fn($id, $name) => [strtolower($name) => $id]);
+        $states = State::pluck('id', 'name')->mapWithKeys(fn($id, $name) => [strtolower($name) => $id]);
+
+        $imported = 0;
+        $skipped = 0;
+        $errors = [];
+        $rowNum = 1;
+
+        while (($row = fgetcsv($handle)) !== false) {
+            $rowNum++;
+            if (count($row) < count($header)) {
+                $row = array_pad($row, count($header), '');
+            }
+            $data = array_combine($header, array_slice($row, 0, count($header)));
+
+            $regNumber = trim($data['reg_number'] ?? '');
+            $fullName = trim($data['full_name'] ?? '');
+
+            if (!$regNumber || !$fullName) {
+                $skipped++;
+                $errors[] = "Row {$rowNum}: Missing reg_number or full_name — skipped.";
+                continue;
+            }
+
+            // Skip duplicates
+            if (Student::where('reg_number', $regNumber)->exists()) {
+                $skipped++;
+                $errors[] = "Row {$rowNum}: Reg number '{$regNumber}' already exists — skipped.";
+                continue;
+            }
+
+            // Resolve department
+            $deptId = null;
+            if (!empty($data['department'])) {
+                $deptId = $departments[strtolower(trim($data['department']))] ?? null;
+            }
+
+            // Resolve state
+            $stateId = null;
+            if (!empty($data['state'])) {
+                $stateId = $states[strtolower(trim($data['state']))] ?? null;
+            }
+
+            // Resolve LGA
+            $lgaId = null;
+            if (!empty($data['lga']) && $stateId) {
+                $lgaId = Lga::where('state_id', $stateId)
+                    ->whereRaw('LOWER(name) = ?', [strtolower(trim($data['lga']))])
+                    ->value('id');
+            }
+
+            // Resolve Town
+            $townId = null;
+            if (!empty($data['town']) && $lgaId) {
+                $townId = Town::where('lga_id', $lgaId)
+                    ->whereRaw('LOWER(name) = ?', [strtolower(trim($data['town']))])
+                    ->value('id');
+            }
+
+            // Process photo if available
+            $photoFilename = '';
+            $regKey = strtoupper(trim($regNumber));
+            if (isset($photoMap[$regKey])) {
+                try {
+                    $photoFilename = $this->processPhotoFromPath($photoMap[$regKey]);
+                } catch (\Exception $e) {
+                    // Photo failed, continue without it
+                }
+            }
+
+            $level = trim($data['level'] ?? '100');
+            if (!in_array($level, ['100', '200', '300', '400'])) {
+                $level = '100';
+            }
+
+            $sex = ucfirst(strtolower(trim($data['sex'] ?? 'Male')));
+            if (!in_array($sex, ['Male', 'Female'])) $sex = 'Male';
+
+            $maritalStatus = ucfirst(strtolower(trim($data['marital_status'] ?? 'Single')));
+            if (!in_array($maritalStatus, ['Single', 'Married'])) $maritalStatus = 'Single';
+
+            Student::create([
+                'reg_number' => $regNumber,
+                'jamb_reg_number' => trim($data['jamb_reg_number'] ?? ''),
+                'full_name' => $fullName,
+                'date_of_birth' => !empty($data['date_of_birth']) ? $data['date_of_birth'] : null,
+                'sex' => $sex,
+                'marital_status' => $maritalStatus,
+                'state_id' => $stateId,
+                'lga_id' => $lgaId,
+                'town_id' => $townId,
+                'phone_number' => trim($data['phone_number'] ?? $data['phone'] ?? ''),
+                'email' => trim($data['email'] ?? ''),
+                'department_id' => $deptId,
+                'level' => $level,
+                'photo_filename' => $photoFilename,
+            ]);
+
+            $imported++;
+        }
+
+        fclose($handle);
+
+        // Cleanup temp zip directory
+        if ($tempZipDir && is_dir($tempZipDir)) {
+            $this->deleteDirectory($tempZipDir);
+        }
+
+        $message = "{$imported} students imported successfully.";
+        if ($skipped > 0) {
+            $message .= " {$skipped} rows skipped.";
+        }
+
+        return redirect()->route('admin.students.index')
+            ->with('success', $message)
+            ->with('import_errors', $errors);
+    }
+
+    public function downloadTemplate()
+    {
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="students_import_template.csv"',
+        ];
+
+        $callback = function () {
+            $out = fopen('php://output', 'w');
+            fputcsv($out, [
+                'reg_number', 'jamb_reg_number', 'full_name', 'date_of_birth',
+                'sex', 'marital_status', 'state', 'lga', 'town',
+                'phone_number', 'email', 'department', 'level',
+            ]);
+            // Sample row
+            fputcsv($out, [
+                'CSC/2025/001', 'JAMB/2025/12345678', 'John Doe', '2000-01-15',
+                'Male', 'Single', 'Lagos', 'Ikeja', 'Oregun',
+                '08012345678', 'john@example.com', 'Computer Science', '100',
+            ]);
+            fclose($out);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
+
+    private function processPhotoFromPath(string $path): string
+    {
+        $filename = bin2hex(random_bytes(16)) . '.jpg';
+        $photoDir = storage_path('app/public/photos');
+        $thumbDir = storage_path('app/public/photos/thumbs');
+
+        if (!is_dir($photoDir)) mkdir($photoDir, 0755, true);
+        if (!is_dir($thumbDir)) mkdir($thumbDir, 0755, true);
+
+        $manager = new ImageManager(new Driver());
+
+        $image = $manager->read($path);
+        $image->scaleDown(800, 800);
+        $image->toJpeg(70)->save($photoDir . '/' . $filename);
+
+        $thumb = $manager->read($path);
+        $thumb->cover(80, 80);
+        $thumb->toJpeg(60)->save($thumbDir . '/' . $filename);
+
+        return $filename;
+    }
+
+    private function deleteDirectory(string $dir): void
+    {
+        $items = new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator($dir, \RecursiveDirectoryIterator::SKIP_DOTS),
+            \RecursiveIteratorIterator::CHILD_FIRST
+        );
+        foreach ($items as $item) {
+            $item->isDir() ? rmdir($item->getPathname()) : unlink($item->getPathname());
+        }
+        rmdir($dir);
     }
 
     private function processPhoto($file): string
