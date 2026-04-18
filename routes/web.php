@@ -28,6 +28,9 @@ Route::prefix('admin')->middleware('auth')->name('admin.')->group(function () {
     Route::get('students-import', [StudentController::class, 'importForm'])->name('students.import.form');
     Route::post('students-import', [StudentController::class, 'import'])->name('students.import');
     Route::get('students-import-template', [StudentController::class, 'downloadTemplate'])->name('students.import.template');
+    Route::get('fees-import', [StudentController::class, 'feeImportForm'])->name('students.fee.import.form');
+    Route::post('fees-import', [StudentController::class, 'feeImport'])->name('students.fee.import');
+    Route::get('fees-import-template', [StudentController::class, 'feeTemplate'])->name('students.fee.template');
     Route::post('students/{student}/restore', [StudentController::class, 'restore'])->name('students.restore');
     Route::post('students/session-rollover', [AcademicSessionController::class, 'rollover'])->name('sessions.rollover');
 

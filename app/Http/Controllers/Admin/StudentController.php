@@ -450,6 +450,125 @@ class StudentController extends Controller
         return response()->stream($callback, 200, $headers);
     }
 
+    public function feeImportForm()
+    {
+        $sessions = AcademicSession::orderBy('name', 'desc')->get();
+        return view('admin.students.fee_import', compact('sessions'));
+    }
+
+    public function feeImport(Request $request)
+    {
+        $request->validate([
+            'csv_file' => 'required|file|mimes:csv,txt|max:10240',
+            'academic_session_id' => 'required|exists:academic_sessions,id',
+            'fee_type' => 'required|in:school_fees,departmental_dues,faculty_dues,all',
+        ]);
+
+        $sessionId = $request->academic_session_id;
+        $feeType = $request->fee_type;
+
+        $csvPath = $request->file('csv_file')->getPathname();
+        $handle = fopen($csvPath, 'r');
+        if (!$handle) {
+            return back()->with('error', 'Could not read CSV file.');
+        }
+
+        $header = fgetcsv($handle);
+        if (!$header) {
+            fclose($handle);
+            return back()->with('error', 'CSV file is empty.');
+        }
+
+        $header = array_map(function ($h) {
+            return strtolower(trim(str_replace(' ', '_', $h)));
+        }, $header);
+
+        if (!in_array('reg_number', $header)) {
+            fclose($handle);
+            return back()->with('error', 'CSV must have a "reg_number" column.');
+        }
+
+        $updated = 0;
+        $notFound = 0;
+        $errors = [];
+        $rowNum = 1;
+
+        while (($row = fgetcsv($handle)) !== false) {
+            $rowNum++;
+            if (count($row) < count($header)) {
+                $row = array_pad($row, count($header), '');
+            }
+            $data = array_combine($header, array_slice($row, 0, count($header)));
+
+            $regNumber = trim($data['reg_number'] ?? '');
+            if (!$regNumber) continue;
+
+            $student = Student::where('reg_number', $regNumber)->first();
+            if (!$student) {
+                $notFound++;
+                $errors[] = "Row {$rowNum}: Reg number '{$regNumber}' not found — skipped.";
+                continue;
+            }
+
+            // Determine what to mark as paid
+            $feeData = [];
+            if ($feeType === 'school_fees' || $feeType === 'all') {
+                $paidValue = $data['school_fees_paid'] ?? $data['paid'] ?? 'Yes';
+                $feeData['school_fees_paid'] = in_array(strtolower(trim($paidValue)), ['yes', '1', 'true', 'paid']);
+                if ($feeData['school_fees_paid']) {
+                    $feeData['school_fees_date_paid'] = !empty($data['date_paid']) ? $data['date_paid'] : now()->toDateString();
+                }
+            }
+            if ($feeType === 'departmental_dues' || $feeType === 'all') {
+                $paidValue = $data['departmental_dues_paid'] ?? $data['paid'] ?? 'Yes';
+                $feeData['departmental_dues_paid'] = in_array(strtolower(trim($paidValue)), ['yes', '1', 'true', 'paid']);
+            }
+            if ($feeType === 'faculty_dues' || $feeType === 'all') {
+                $paidValue = $data['faculty_dues_paid'] ?? $data['paid'] ?? 'Yes';
+                $feeData['faculty_dues_paid'] = in_array(strtolower(trim($paidValue)), ['yes', '1', 'true', 'paid']);
+            }
+
+            StudentFee::updateOrCreate(
+                [
+                    'student_id' => $student->id,
+                    'academic_session_id' => $sessionId,
+                ],
+                $feeData
+            );
+
+            $updated++;
+        }
+
+        fclose($handle);
+
+        $message = "{$updated} fee records updated successfully.";
+        if ($notFound > 0) {
+            $message .= " {$notFound} reg numbers not found.";
+        }
+
+        return redirect()->route('admin.students.index')
+            ->with('success', $message)
+            ->with('import_errors', $errors);
+    }
+
+    public function feeTemplate()
+    {
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="fee_import_template.csv"',
+        ];
+
+        $callback = function () {
+            $out = fopen('php://output', 'w');
+            fputcsv($out, ['reg_number', 'paid']);
+            fputcsv($out, ['CSC/2025/001', 'Yes']);
+            fputcsv($out, ['CSC/2025/002', 'Yes']);
+            fclose($out);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
+
     private function processPhotoFromPath(string $path): string
     {
         $filename = bin2hex(random_bytes(16)) . '.jpg';

@@ -5,6 +5,7 @@
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h4 class="mb-0">Students</h4>
     <div>
+        <a href="{{ route('admin.students.fee.import.form') }}" class="btn btn-outline-warning btn-sm"><i class="bi bi-cash-stack"></i> Import Fees</a>
         <a href="{{ route('admin.students.import.form') }}" class="btn btn-outline-primary btn-sm"><i class="bi bi-upload"></i> Import CSV</a>
         <a href="{{ route('admin.students.create') }}" class="btn btn-success btn-sm"><i class="bi bi-plus-lg"></i> Add Student</a>
     </div>
