@@ -515,9 +515,7 @@ class StudentController extends Controller
             if ($feeType === 'school_fees' || $feeType === 'all') {
                 $paidValue = $data['school_fees_paid'] ?? $data['paid'] ?? 'Yes';
                 $feeData['school_fees_paid'] = in_array(strtolower(trim($paidValue)), ['yes', '1', 'true', 'paid']);
-                if ($feeData['school_fees_paid']) {
-                    $feeData['school_fees_date_paid'] = !empty($data['date_paid']) ? $data['date_paid'] : now()->toDateString();
-                }
+                $feeData['school_fees_date_paid'] = !empty($data['date_paid']) ? $data['date_paid'] : null;
             }
             if ($feeType === 'departmental_dues' || $feeType === 'all') {
                 $paidValue = $data['departmental_dues_paid'] ?? $data['paid'] ?? 'Yes';
@@ -560,9 +558,9 @@ class StudentController extends Controller
 
         $callback = function () {
             $out = fopen('php://output', 'w');
-            fputcsv($out, ['reg_number', 'paid']);
-            fputcsv($out, ['CSC/2025/001', 'Yes']);
-            fputcsv($out, ['CSC/2025/002', 'Yes']);
+            fputcsv($out, ['reg_number', 'paid', 'date_paid']);
+            fputcsv($out, ['CSC/2025/001', 'Yes', '2026-01-15']);
+            fputcsv($out, ['CSC/2025/002', 'Yes', '']);
             fclose($out);
         };
 
