@@ -26,11 +26,11 @@
         }
         .badge-paid { background: var(--faces-green); color: #fff; }
         .badge-unpaid { background: #dc3545; color: #fff; }
-        .sidebar { min-height: calc(100vh - 56px); background: #fff; border-right: 1px solid #dee2e6; }
-        .sidebar .nav-link { color: #333 !important; padding: .6rem 1rem; font-weight: 500; }
+        .sidebar { min-height: calc(100vh - 56px); background: #fff; border-right: 1px solid #dee2e6; padding-top: .5rem; }
+        .sidebar .nav-link { color: #333 !important; padding: .5rem .75rem; font-weight: 500; font-size: .9rem; display: flex; align-items: center; gap: .5rem; margin-bottom: .15rem; }
         .sidebar .nav-link:hover { background: #c8e6c9; color: #1b5e20 !important; }
-        .sidebar .nav-link.active { background: var(--faces-green); color: #fff !important; border-radius: 4px; }
-        .sidebar .nav-link i { width: 24px; }
+        .sidebar .nav-link.active { background: var(--faces-green); color: #fff !important; border-radius: 4px; margin-left: .25rem; margin-right: .25rem; }
+        .sidebar .nav-link i { width: 20px; text-align: center; font-size: .95rem; }
         .offcanvas .nav-link { color: #333 !important; padding: .6rem 1rem; font-weight: 500; }
         .offcanvas .nav-link:hover { background: #c8e6c9; color: #1b5e20 !important; }
         .offcanvas .nav-link.active { background: var(--faces-green); color: #fff !important; border-radius: 4px; margin: 0 .5rem; }
