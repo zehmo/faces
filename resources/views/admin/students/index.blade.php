@@ -7,7 +7,7 @@
     <div class="d-flex flex-wrap gap-1">
         <a href="{{ route('admin.students.fee.import.form') }}" class="btn btn-outline-warning btn-sm"><i class="bi bi-cash-stack"></i> <span class="d-none d-sm-inline">Import</span> Fees</a>
         <a href="{{ route('admin.students.import.form') }}" class="btn btn-outline-primary btn-sm"><i class="bi bi-upload"></i> <span class="d-none d-sm-inline">Import</span> CSV</a>
-        <a href="{{ route('admin.students.create') }}" class="btn btn-success btn-sm"><i class="bi bi-plus-lg"></i> Add</a>
+        <a href="{{ route('admin.students.create') }}" class="btn btn-success btn-sm"><i class="bi bi-plus-lg"></i> Add Student</a>
     </div>
 </div>
 
