@@ -64,7 +64,7 @@ public class StudentAdapter extends ListAdapter<StudentEntity, StudentAdapter.Vi
         if (student.photoLocalPath != null && new File(student.photoLocalPath).exists()) {
             Glide.with(holder.itemView.getContext())
                     .load(new File(student.photoLocalPath))
-                    .circleCrop()
+                    .centerCrop()
                     .placeholder(R.drawable.ic_person)
                     .into(holder.imgThumb);
         } else {

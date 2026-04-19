@@ -1,5 +1,34 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- MD3 Light Theme Colors (Green seed) -->
+    <color name="md_theme_primary">#2E7D32</color>
+    <color name="md_theme_onPrimary">#FFFFFF</color>
+    <color name="md_theme_primaryContainer">#B9F6CA</color>
+    <color name="md_theme_onPrimaryContainer">#002106</color>
+    <color name="md_theme_secondary">#52634F</color>
+    <color name="md_theme_onSecondary">#FFFFFF</color>
+    <color name="md_theme_secondaryContainer">#D5E8CF</color>
+    <color name="md_theme_onSecondaryContainer">#101F10</color>
+    <color name="md_theme_tertiary">#386569</color>
+    <color name="md_theme_onTertiary">#FFFFFF</color>
+    <color name="md_theme_tertiaryContainer">#BCEBEF</color>
+    <color name="md_theme_onTertiaryContainer">#002022</color>
+    <color name="md_theme_error">#BA1A1A</color>
+    <color name="md_theme_onError">#FFFFFF</color>
+    <color name="md_theme_errorContainer">#FFDAD6</color>
+    <color name="md_theme_onErrorContainer">#410002</color>
+    <color name="md_theme_background">#FCFDF7</color>
+    <color name="md_theme_onBackground">#1A1C19</color>
+    <color name="md_theme_surface">#FCFDF7</color>
+    <color name="md_theme_onSurface">#1A1C19</color>
+    <color name="md_theme_surfaceVariant">#DEE5D8</color>
+    <color name="md_theme_onSurfaceVariant">#424940</color>
+    <color name="md_theme_outline">#72796F</color>
+    <color name="md_theme_surfaceContainerLow">#F6F7F1</color>
+    <color name="md_theme_surfaceContainer">#F0F1EB</color>
+    <color name="md_theme_surfaceContainerHigh">#EAECE6</color>
+
+    <!-- Legacy / convenience aliases -->
     <color name="faces_green">#2E7D32</color>
     <color name="faces_green_dark">#1B5E20</color>
     <color name="faces_green_light">#E8F5E9</color>

@@ -1,11 +1,21 @@
+
 package com.faces.app.ui;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
+import android.content.Intent;
+import android.annotation.SuppressLint;
 import android.os.Bundle;
+import android.view.GestureDetector;
+import android.view.MotionEvent;
 import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 
 import com.bumptech.glide.Glide;
 import com.faces.app.R;
@@ -27,7 +37,9 @@ public class StudentDetailActivity extends AppCompatActivity {
     private StudentEntity currentStudent;
     private String filterDepartment;
     private String filterLevel;
+    private GestureDetector gestureDetector;
 
+    @SuppressLint("ClickableViewAccessibility")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -35,11 +47,11 @@ public class StudentDetailActivity extends AppCompatActivity {
         setContentView(binding.getRoot());
 
         binding.toolbar.setTitle("Student Details");
-        binding.toolbar.setNavigationOnClickListener(v -> finish());
         setSupportActionBar(binding.toolbar);
         if (getSupportActionBar() != null) {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         }
+        binding.toolbar.setNavigationOnClickListener(v -> finish());
 
         db = AppDatabase.getInstance(this);
         int localId = getIntent().getIntExtra("localId", -1);
@@ -50,6 +62,35 @@ public class StudentDetailActivity extends AppCompatActivity {
             finish();
             return;
         }
+
+        // Swipe gesture detector
+        gestureDetector = new GestureDetector(this, new GestureDetector.SimpleOnGestureListener() {
+            private static final int SWIPE_THRESHOLD = 100;
+            private static final int SWIPE_VELOCITY_THRESHOLD = 100;
+
+            @Override
+            public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
+                if (e1 == null || e2 == null) return false;
+                float diffX = e2.getX() - e1.getX();
+                float diffY = e2.getY() - e1.getY();
+                if (Math.abs(diffX) > Math.abs(diffY)
+                        && Math.abs(diffX) > SWIPE_THRESHOLD
+                        && Math.abs(velocityX) > SWIPE_VELOCITY_THRESHOLD) {
+                    if (diffX > 0) {
+                        navigatePrevious();
+                    } else {
+                        navigateNext();
+                    }
+                    return true;
+                }
+                return false;
+            }
+        });
+
+        binding.scrollView.setOnTouchListener((v, event) -> {
+            gestureDetector.onTouchEvent(event);
+            return false;
+        });
 
         executor.execute(() -> {
             currentStudent = db.studentDao().findByLocalId(localId);
@@ -63,6 +104,36 @@ public class StudentDetailActivity extends AppCompatActivity {
 
         binding.btnPrevious.setOnClickListener(v -> navigatePrevious());
         binding.btnNext.setOnClickListener(v -> navigateNext());
+
+        setupBottomNav();
+    }
+
+    private void setupBottomNav() {
+        binding.bottomNav.setOnItemSelectedListener(item -> {
+            int id = item.getItemId();
+            if (id == R.id.nav_home) {
+                Intent intent = new Intent(this, MainActivity.class);
+                intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                startActivity(intent);
+                finish();
+                return true;
+            } else if (id == R.id.nav_search) {
+                Intent intent = new Intent(this, MainActivity.class);
+                intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                intent.putExtra("tab", 1);
+                startActivity(intent);
+                finish();
+                return true;
+            } else if (id == R.id.nav_profile) {
+                Intent intent = new Intent(this, MainActivity.class);
+                intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                intent.putExtra("tab", 2);
+                startActivity(intent);
+                finish();
+                return true;
+            }
+            return false;
+        });
     }
 
     private void displayStudent(StudentEntity s, List<StudentFeeEntity> fees) {
@@ -72,15 +143,17 @@ public class StudentDetailActivity extends AppCompatActivity {
                     .load(new File(s.photoLocalPath))
                     .placeholder(R.drawable.ic_person)
                     .error(R.drawable.ic_person)
-                    .circleCrop()
+                    .centerCrop()
                     .into(binding.imgPhoto);
         } else {
             binding.imgPhoto.setImageResource(R.drawable.ic_person);
         }
 
         // Basic info
-        binding.tvRegNumber.setText(s.regNumber);
         binding.tvFullName.setText(s.fullName);
+        binding.tvRegNumber.setText(s.regNumber);
+        binding.tvLevel.setText(s.department + "  •  " + (s.level != null ? s.level + " Level" : "—"));
+
         setFieldOrHide(binding.tvJambReg, "JAMB Reg", s.jambRegNumber);
         setFieldOrHide(binding.tvDob, "Date of Birth", s.dateOfBirth);
         setFieldOrHide(binding.tvSex, "Sex", s.sex);
@@ -91,7 +164,6 @@ public class StudentDetailActivity extends AppCompatActivity {
         setFieldOrHide(binding.tvPhone, "Phone", s.phoneNumber);
         setFieldOrHide(binding.tvEmail, "Email", s.email);
         setFieldOrHide(binding.tvDepartment, "Department", s.department);
-        binding.tvLevel.setText("Level: " + (s.level != null ? s.level + "L" : "—"));
 
         // Fee records
         binding.feesContainer.removeAllViews();
@@ -102,7 +174,7 @@ public class StudentDetailActivity extends AppCompatActivity {
         } else {
             TextView tv = new TextView(this);
             tv.setText("No fee records available.");
-            tv.setTextColor(getResources().getColor(android.R.color.darker_gray, null));
+            tv.setTextColor(ContextCompat.getColor(this, R.color.md_theme_onSurfaceVariant));
             tv.setPadding(0, 8, 0, 8);
             binding.feesContainer.addView(tv);
         }
@@ -114,6 +186,17 @@ public class StudentDetailActivity extends AppCompatActivity {
             tv.setVisibility(View.VISIBLE);
         } else {
             tv.setVisibility(View.GONE);
+            // Also hide the divider below this field
+            if (tv.getParent() instanceof LinearLayout) {
+                LinearLayout parent = (LinearLayout) tv.getParent();
+                int idx = parent.indexOfChild(tv);
+                if (idx >= 0 && idx + 1 < parent.getChildCount()) {
+                    View next = parent.getChildAt(idx + 1);
+                    if (next.getLayoutParams().height <= 2) {
+                        next.setVisibility(View.GONE);
+                    }
+                }
+            }
         }
     }
 
@@ -126,14 +209,14 @@ public class StudentDetailActivity extends AppCompatActivity {
         TextView sessionHeader = new TextView(this);
         sessionHeader.setText(fee.session);
         sessionHeader.setTextSize(14);
-        sessionHeader.setTextColor(getResources().getColor(R.color.faces_green_dark, null));
+        sessionHeader.setTextColor(ContextCompat.getColor(this, R.color.md_theme_primary));
         sessionHeader.setTypeface(null, android.graphics.Typeface.BOLD);
         row.addView(sessionHeader);
 
-        // Fee badges
-        addFeeBadge(row, "School Fees", fee.schoolFeesPaid);
-        addFeeBadge(row, "Departmental Dues", fee.departmentalDuesPaid);
-        addFeeBadge(row, "Faculty Dues", fee.facultyDuesPaid);
+        // School Fees chip with date if present
+        addFeeChip(row, "School Fees", fee.schoolFeesPaid, fee.schoolFeesDatePaid);
+        addFeeChip(row, "Dept. Dues", fee.departmentalDuesPaid, null);
+        addFeeChip(row, "Faculty Dues", fee.facultyDuesPaid, null);
 
         binding.feesContainer.addView(row);
 
@@ -141,24 +224,45 @@ public class StudentDetailActivity extends AppCompatActivity {
         View divider = new View(this);
         divider.setLayoutParams(new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, 1));
-        divider.setBackgroundColor(getResources().getColor(android.R.color.darker_gray, null));
+        divider.setBackgroundColor(0xFFE0E0E0);
         binding.feesContainer.addView(divider);
     }
 
-    private void addFeeBadge(LinearLayout parent, String label, boolean paid) {
+    private void addFeeChip(LinearLayout parent, String label, boolean paid, String date) {
         TextView tv = new TextView(this);
-        tv.setPadding(0, 4, 0, 4);
+        tv.setPadding(0, 6, 0, 6);
         tv.setTextSize(13);
 
+        String text;
         if (paid) {
-            tv.setText("  ✓  " + label + ": PAID");
-            tv.setTextColor(getResources().getColor(R.color.faces_green, null));
+            text = "  ✓  " + label + ": PAID";
+            if (date != null && !date.isEmpty()) {
+                String formatted = formatDateForDisplay(date);
+                if (formatted != null) {
+                    text += " (" + formatted + ")";
+                }
+            }
+            tv.setTextColor(ContextCompat.getColor(this, R.color.paid_green));
         } else {
-            tv.setText("  ✗  " + label + ": NOT PAID");
-            tv.setTextColor(getResources().getColor(android.R.color.holo_red_dark, null));
+            text = "  ✗  " + label + ": NOT PAID";
+            tv.setTextColor(ContextCompat.getColor(this, R.color.unpaid_red));
         }
-
+        tv.setText(text);
         parent.addView(tv);
+    }
+
+    // Format date as 'August 9, 2026' from '2026-08-09' or similar
+    private String formatDateForDisplay(String raw) {
+        try {
+            // Try ISO format first
+            SimpleDateFormat iso = new SimpleDateFormat("yyyy-MM-dd");
+            Date d = iso.parse(raw);
+            SimpleDateFormat out = new SimpleDateFormat("MMMM d, yyyy");
+            return out.format(d);
+        } catch (ParseException e) {
+            // Fallback: just return as is
+            return raw;
+        }
     }
 
     private void navigateNext() {

@@ -4,7 +4,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/white">
+    android:background="?attr/colorSurface">
 
     <com.google.android.material.appbar.MaterialToolbar
         android:id="@+id/toolbar"
@@ -13,94 +13,27 @@
         android:background="@color/faces_green"
         app:titleTextColor="@android:color/white"
         app:subtitleTextColor="@android:color/white"
+        app:menu="@menu/top_app_bar_menu"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <ImageButton
-        android:id="@+id/btnLogout"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
-        android:src="@android:drawable/ic_menu_revert"
-        android:background="?attr/selectableItemBackgroundBorderless"
-        android:contentDescription="Logout"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="@id/toolbar"
-        app:layout_constraintBottom_toBottomOf="@id/toolbar"
-        android:layout_marginEnd="8dp"
-        app:tint="@android:color/white" />
-
-    <TextView
-        android:id="@+id/tvHeading"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Select Department"
-        android:textSize="18sp"
-        android:textStyle="bold"
-        android:textColor="@color/faces_green_dark"
-        android:paddingStart="16dp"
-        android:paddingEnd="16dp"
-        android:paddingTop="12dp"
-        android:paddingBottom="8dp"
-        app:layout_constraintTop_toBottomOf="@id/toolbar" />
-
-    <TextView
-        android:id="@+id/tvEmpty"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="No departments found. Tap Sync to download records."
-        android:textSize="14sp"
-        android:textColor="@android:color/darker_gray"
-        android:visibility="gone"
-        app:layout_constraintTop_toBottomOf="@id/tvHeading"
-        app:layout_constraintBottom_toTopOf="@id/syncBar"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
-
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/recyclerView"
+    <androidx.viewpager2.widget.ViewPager2
+        android:id="@+id/viewPager"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:padding="8dp"
-        android:clipToPadding="false"
-        app:layout_constraintTop_toBottomOf="@id/tvHeading"
-        app:layout_constraintBottom_toTopOf="@id/syncBar" />
+        app:layout_constraintTop_toBottomOf="@id/toolbar"
+        app:layout_constraintBottom_toTopOf="@id/bottomNav" />
 
-    <LinearLayout
-        android:id="@+id/syncBar"
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+        android:id="@+id/bottomNav"
         android:layout_width="match_parent"
-        android:layout_height="48dp"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:paddingStart="12dp"
-        android:paddingEnd="8dp"
-        android:background="@color/faces_green_light"
-        app:layout_constraintBottom_toBottomOf="parent">
-
-        <TextView
-            android:id="@+id/tvSyncStatus"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Last sync: Never"
-            android:textSize="12sp"
-            android:textColor="@color/faces_green_dark"
-            android:singleLine="true" />
-
-        <ProgressBar
-            android:id="@+id/syncProgress"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:visibility="gone"
-            android:layout_marginEnd="8dp" />
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnSync"
-            android:layout_width="wrap_content"
-            android:layout_height="36dp"
-            android:text="Sync"
-            android:textSize="12sp"
-            style="@style/Widget.Material3.Button.TonalButton"
-            app:backgroundTint="@color/faces_green" />
-
-    </LinearLayout>
+        android:layout_height="wrap_content"
+        android:background="@android:color/white"
+        app:menu="@menu/bottom_nav_menu"
+        app:labelVisibilityMode="labeled"
+        app:itemIconTint="@color/nav_item_color"
+        app:itemTextColor="@color/nav_item_color"
+        app:itemActiveIndicatorStyle="@null"
+        app:elevation="8dp"
+        app:layout_constraintBottom_toBottomOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

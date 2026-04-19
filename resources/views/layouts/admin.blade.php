@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'Faces') — Faculty of Computing</title>
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('favicon-32.png') }}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('apple-touch-icon.png') }}">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
     <style>
@@ -37,7 +39,7 @@
         .offcanvas .nav-link i { width: 24px; }
         .card-stat { border-left: 4px solid var(--faces-green); }
         .table th { font-weight: 600; font-size: .875rem; }
-        .photo-thumb { width: 40px; height: 40px; object-fit: cover; border-radius: 50%; }
+        .photo-thumb { width: 40px; height: 40px; object-fit: cover; border-radius: 4px; }
         @media (max-width: 767.98px) {
             main { padding: 1rem !important; }
             .table { font-size: .85rem; }

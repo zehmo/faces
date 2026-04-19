@@ -15,9 +15,9 @@
         <div class="row">
             <div class="col-md-3 text-center">
                 @if($student->photo_filename)
-                    <img src="{{ asset('storage/photos/' . $student->photo_filename) }}" class="rounded-circle mb-3" style="width:160px;height:160px;object-fit:cover;" alt="Photo">
+                    <img src="{{ asset('storage/photos/' . $student->photo_filename) }}" class="rounded mb-3" style="width:160px;height:200px;object-fit:cover;" alt="Photo">
                 @else
-                    <div class="bg-secondary rounded-circle d-inline-flex align-items-center justify-content-center text-white mb-3" style="width:160px;height:160px;font-size:3rem;"><i class="bi bi-person"></i></div>
+                    <div class="bg-secondary rounded d-inline-flex align-items-center justify-content-center text-white mb-3" style="width:160px;height:200px;font-size:3rem;"><i class="bi bi-person"></i></div>
                 @endif
             </div>
             <div class="col-md-9">
@@ -48,7 +48,11 @@
                 <tr>
                     <td>{{ $fee->academicSession->name }}</td>
                     <td><span class="badge {{ $fee->school_fees_paid ? 'badge-paid' : 'badge-unpaid' }}">{{ $fee->school_fees_paid ? 'PAID' : 'NOT PAID' }}</span></td>
-                    <td>{{ $fee->school_fees_date_paid?->format('d M Y') ?? '—' }}</td>
+                    <td>
+                        @if($fee->school_fees_paid && $fee->school_fees_date_paid)
+                            {{ $fee->school_fees_date_paid->format('d M Y') }}
+                        @endif
+                    </td>
                     <td><span class="badge {{ $fee->departmental_dues_paid ? 'badge-paid' : 'badge-unpaid' }}">{{ $fee->departmental_dues_paid ? 'PAID' : 'NOT PAID' }}</span></td>
                     <td><span class="badge {{ $fee->faculty_dues_paid ? 'badge-paid' : 'badge-unpaid' }}">{{ $fee->faculty_dues_paid ? 'PAID' : 'NOT PAID' }}</span></td>
                 </tr>

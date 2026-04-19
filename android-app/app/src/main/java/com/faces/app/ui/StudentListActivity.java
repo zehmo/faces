@@ -11,6 +11,7 @@ import androidx.lifecycle.LiveData;
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
+import com.faces.app.R;
 import com.faces.app.data.AppDatabase;
 import com.faces.app.data.StudentDao;
 import com.faces.app.data.StudentEntity;
@@ -56,6 +57,37 @@ public class StudentListActivity extends AppCompatActivity {
 
         // Initial load — all students in dept+level
         observeStudents("");
+
+        setupBottomNav();
+    }
+
+    private void setupBottomNav() {
+        binding.bottomNav.setSelectedItemId(R.id.nav_home);
+        binding.bottomNav.setOnItemSelectedListener(item -> {
+            int id = item.getItemId();
+            if (id == R.id.nav_home) {
+                Intent intent = new Intent(this, MainActivity.class);
+                intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                startActivity(intent);
+                finish();
+                return true;
+            } else if (id == R.id.nav_search) {
+                Intent intent = new Intent(this, MainActivity.class);
+                intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                intent.putExtra("tab", 1);
+                startActivity(intent);
+                finish();
+                return true;
+            } else if (id == R.id.nav_profile) {
+                Intent intent = new Intent(this, MainActivity.class);
+                intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                intent.putExtra("tab", 2);
+                startActivity(intent);
+                finish();
+                return true;
+            }
+            return false;
+        });
     }
 
     private void setupRecyclerView() {

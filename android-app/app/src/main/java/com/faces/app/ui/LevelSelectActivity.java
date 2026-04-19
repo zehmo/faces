@@ -2,7 +2,6 @@ package com.faces.app.ui;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -40,16 +39,47 @@ public class LevelSelectActivity extends AppCompatActivity {
         }
         binding.toolbar.setNavigationOnClickListener(v -> finish());
 
-        binding.card100.setOnClickListener(v -> openStudentList("100"));
-        binding.card200.setOnClickListener(v -> openStudentList("200"));
-        binding.card300.setOnClickListener(v -> openStudentList("300"));
-        binding.card400.setOnClickListener(v -> openStudentList("400"));
+        binding.row100.setOnClickListener(v -> openStudentList("100"));
+        binding.row200.setOnClickListener(v -> openStudentList("200"));
+        binding.row300.setOnClickListener(v -> openStudentList("300"));
+        binding.row400.setOnClickListener(v -> openStudentList("400"));
+
+        setupBottomNav();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
         loadCounts();
+    }
+
+    private void setupBottomNav() {
+        binding.bottomNav.setSelectedItemId(R.id.nav_home);
+        binding.bottomNav.setOnItemSelectedListener(item -> {
+            int id = item.getItemId();
+            if (id == R.id.nav_home) {
+                Intent intent = new Intent(this, MainActivity.class);
+                intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                startActivity(intent);
+                finish();
+                return true;
+            } else if (id == R.id.nav_search) {
+                Intent intent = new Intent(this, MainActivity.class);
+                intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                intent.putExtra("tab", 1);
+                startActivity(intent);
+                finish();
+                return true;
+            } else if (id == R.id.nav_profile) {
+                Intent intent = new Intent(this, MainActivity.class);
+                intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                intent.putExtra("tab", 2);
+                startActivity(intent);
+                finish();
+                return true;
+            }
+            return false;
+        });
     }
 
     private void loadCounts() {

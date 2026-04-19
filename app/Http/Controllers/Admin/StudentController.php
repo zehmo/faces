@@ -330,10 +330,58 @@ class StudentController extends Controller
                 continue;
             }
 
-            // Skip duplicates
-            if (Student::where('reg_number', $regNumber)->exists()) {
+            // Skip duplicates — check including soft-deleted
+            $existing = Student::withTrashed()->where('reg_number', $regNumber)->first();
+            if ($existing) {
+                if ($existing->trashed()) {
+                    $existing->restore();
+                }
+                // Update existing record
+                $deptId = null;
+                if (!empty($data['department'])) {
+                    $deptId = $departments[strtolower(trim($data['department']))] ?? null;
+                }
+                $stateId = null;
+                if (!empty($data['state'])) {
+                    $stateId = $states[strtolower(trim($data['state']))] ?? null;
+                }
+                $lgaId = null;
+                if (!empty($data['lga']) && $stateId) {
+                    $lgaId = Lga::where('state_id', $stateId)
+                        ->whereRaw('LOWER(name) = ?', [strtolower(trim($data['lga']))])
+                        ->value('id');
+                }
+                $photoFilename = $existing->photo_filename;
+                $regKey = strtoupper(trim($regNumber));
+                if (isset($photoMap[$regKey])) {
+                    try {
+                        $photoFilename = $this->processPhotoFromPath($photoMap[$regKey]);
+                    } catch (\Exception $e) {}
+                }
+                $level = trim($data['level'] ?? '100');
+                if (!in_array($level, ['100', '200', '300', '400'])) $level = '100';
+                $sex = ucfirst(strtolower(trim($data['sex'] ?? 'Male')));
+                if (!in_array($sex, ['Male', 'Female'])) $sex = 'Male';
+                $maritalStatus = ucfirst(strtolower(trim($data['marital_status'] ?? 'Single')));
+                if (!in_array($maritalStatus, ['Single', 'Married'])) $maritalStatus = 'Single';
+
+                $existing->update([
+                    'jamb_reg_number' => trim($data['jamb_reg_number'] ?? ''),
+                    'full_name' => $fullName,
+                    'date_of_birth' => !empty($data['date_of_birth']) ? $data['date_of_birth'] : null,
+                    'sex' => $sex,
+                    'marital_status' => $maritalStatus,
+                    'state_id' => $stateId,
+                    'lga_id' => $lgaId,
+                    'town' => trim($data['town'] ?? ''),
+                    'phone_number' => trim($data['phone_number'] ?? $data['phone'] ?? ''),
+                    'email' => trim($data['email'] ?? ''),
+                    'department_id' => $deptId,
+                    'level' => $level,
+                    'photo_filename' => $photoFilename,
+                ]);
                 $skipped++;
-                $errors[] = "Row {$rowNum}: Reg number '{$regNumber}' already exists — skipped.";
+                $errors[] = "Row {$rowNum}: Reg number '{$regNumber}' already exists — updated.";
                 continue;
             }
 
